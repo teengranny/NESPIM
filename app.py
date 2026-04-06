@@ -400,6 +400,14 @@ def main() -> None:
     application.add_error_handler(error_handler)
 
     logger.info("Bot is starting...")
+
+    import asyncio
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
     application.run_polling(
         allowed_updates=Update.ALL_TYPES,
         drop_pending_updates=True,
