@@ -10,6 +10,7 @@ import os
 import random
 import asyncio
 import threading
+from datetime import date
 
 from flask import Flask
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -41,17 +42,16 @@ def run_flask():
 threading.Thread(target=run_flask, daemon=True).start()
 
 # ============================================================
-# Хранилище для счётчиков и статуса премиум (в памяти)
+# Хранилище для счётчиков, дат, премиум-статуса и фильтров
 # ============================================================
-from datetime import date
-
 user_requests = {}      # user_id -> количество идей за сегодня
 user_premium = {}       # user_id -> True/False
 user_last_date = {}     # user_id -> дата последнего сброса (YYYY-MM-DD)
+user_filters = {}       # user_id -> 'budget', 'middle', 'premium' или None
 MAX_FREE = 5
 
 # ============================================================
-# БАЗА ПОДАРКОВ
+# БАЗА ПОДАРКОВ (исправленная версия)
 # ============================================================
 GIFTS_DB = {
     "man": [
@@ -77,7 +77,7 @@ GIFTS_DB = {
         {"title": "Умный браслет для отслеживания активности", "emoji": "🦾", "priceType": "middle", "description": "Мотивирует быть активнее.", "ozonLink": "https://ozon.ru/click/temp"},
         {"title": "Набор бокалов для виски с камнями", "emoji": "🥃", "priceType": "middle", "description": "Для ценителей благородных напитков.", "ozonLink": "https://ozon.ru/click/temp"},
         {"title": "Рюкзак для ноутбука с защитой от дождя", "emoji": "🎒", "priceType": "premium", "description": "Практичный аксессуар для работы и путешествий.", "ozonLink": "https://ozon.ru/click/temp"},
-        {"title": "Настольная игра в жанре стратегии", "emoji": "🎲", "priceType": "budget", "description": "Для увлекательных вечеров с друзьями.", "ozonLink": "https://ozon.ru/click/temp"}
+        {"title": "Настольная игра в жанре стратегии", "emoji": "🎲", "priceType": "budget", "description": "Для увлекательных вечеров с друзьями.", "ozonLink": "https://ozon.ru/click/temp"},
     ],
     "woman": [
         {"title": "Набор косметики премиум‑бренда", "emoji": "💄", "priceType": "premium", "description": "Порадует ценительницу ухода за собой — включает средства для разных этапов бьюти‑рутины.", "ozonLink": "https://ozon.ru/click/premium_cosmetics_set"},
@@ -102,7 +102,7 @@ GIFTS_DB = {
         {"title": "Компактный отпариватель для одежды", "emoji": "💨", "priceType": "middle", "description": "Быстро приведёт вещи в порядок.", "ozonLink": "https://ozon.ru/click/temp"},
         {"title": "Книга по кулинарии от известного шеф‑повара", "emoji": "🍳", "priceType": "budget", "description": "Вдохновит на новые кулинарные эксперименты.", "ozonLink": "https://ozon.ru/click/temp"},
         {"title": "Набор кистей для макияжа профессионального уровня", "emoji": "🪞", "priceType": "premium", "description": "Для безупречного образа.", "ozonLink": "https://ozon.ru/click/temp"},
-        {"title": "Абонемент в СПА на месяц", "emoji": "🧖‍♀️", "priceType": "premium", "description": "Время для отдыха и восстановления.", "ozonLink": "https://ozon.ru/click/temp"}
+        {"title": "Абонемент в СПА на месяц", "emoji": "🧖‍♀️", "priceType": "premium", "description": "Время для отдыха и восстановления.", "ozonLink": "https://ozon.ru/click/temp"},
     ],
     "child": [
         {"title": "Конструктор с элементами дополненной реальности", "emoji": "🧩", "priceType": "middle", "description": "Развивает логику и воображение — совмещает игру с современными технологиями.", "ozonLink": "https://ozon.ru/click/ar_construction_set"},
@@ -127,7 +127,7 @@ GIFTS_DB = {
         {"title": "Мягкие кубики с буквами", "emoji": "🅰️", "priceType": "budget", "description": "Для обучения и игры одновременно.", "ozonLink": "https://ozon.ru/click/temp"},
         {"title": "Робот‑трансформер с пультом управления", "emoji": "🤖", "priceType": "middle", "description": "Увлекательная игрушка для мальчиков.", "ozonLink": "https://ozon.ru/click/temp"},
         {"title": "Набор акварельных красок и кистей", "emoji": "🖌️", "priceType": "budget", "description": "Для первых шагов в живописи.", "ozonLink": "https://ozon.ru/click/temp"},
-        {"title": "Интерактивный глобус с дополненной реальностью", "emoji": "🌍", "priceType": "premium", "description": "Познание мира в игровой форме.", "ozonLink": "https://ozon.ru/click/temp"}
+        {"title": "Интерактивный глобус с дополненной реальностью", "emoji": "🌍", "priceType": "premium", "description": "Познание мира в игровой форме.", "ozonLink": "https://ozon.ru/click/temp"},
     ],
     "colleague": [
         {"title": "Беспроводная зарядная станция", "emoji": "🔋", "priceType": "middle", "description": "Упростит зарядку гаджетов на рабочем месте — сэкономит время и освободит пространство от проводов.", "ozonLink": "https://ozon.ru/click/wireless_charging_station"},
@@ -152,7 +152,7 @@ GIFTS_DB = {
         {"title": "Портативный сканер документов", "emoji": "🖨️", "priceType": "premium", "description": "Упростит работу с бумажными носителями.", "ozonLink": "https://ozon.ru/click/temp"},
         {"title": "Ежедневник в кожаной обложке", "emoji": "🗓️", "priceType": "premium", "description": "Поможет планировать задачи и встречи.", "ozonLink": "https://ozon.ru/click/temp"},
         {"title": "Беспроводные наушники для конференц‑звонков", "emoji": "🎧", "priceType": "premium", "description": "Обеспечат чёткую связь.", "ozonLink": "https://ozon.ru/click/temp"},
-        {"title": "Набор экологичных ручек из переработанных материалов", "emoji": "✒️", "priceType": "budget", "description": "Забота об экологии и рабочем процессе.", "ozonLink": "https://ozon.ru/click/temp"}
+        {"title": "Набор экологичных ручек из переработанных материалов", "emoji": "✒️", "priceType": "budget", "description": "Забота об экологии и рабочем процессе.", "ozonLink": "https://ozon.ru/click/temp"},
     ],
 }
 
@@ -169,10 +169,18 @@ CATEGORIES = {
     "colleague": "🤝 Коллеге",
 }
 
-def get_random_gift(category: str) -> dict:
+# ============================================================
+# ФУНКЦИИ ДЛЯ ФИЛЬТРОВ И ГЕНЕРАЦИИ
+# ============================================================
+
+def get_random_gift(category: str, price_filter: str = None) -> dict:
     gifts = GIFTS_DB.get(category, [])
     if not gifts:
         return {"title": "Скоро добавим идеи", "emoji": "🎁", "priceType": "", "description": "Пожалуйста, выберите другую категорию.", "ozonLink": "https://ozon.ru/"}
+    if price_filter:
+        filtered = [g for g in gifts if g.get("priceType") == price_filter]
+        if filtered:
+            gifts = filtered
     return random.choice(gifts)
 
 def format_gift_message(gift: dict) -> str:
@@ -180,8 +188,19 @@ def format_gift_message(gift: dict) -> str:
     price_line = f"💰 Стоимость: {price_label}\n" if price_label else ""
     return f"{gift['emoji']} *{gift['title']}*\n{price_line}\n{gift['description']}\n\n[Купить →]({gift['ozonLink']})"
 
-def build_category_keyboard() -> InlineKeyboardMarkup:
+def get_main_keyboard(user_id: int) -> InlineKeyboardMarkup:
     buttons = [[InlineKeyboardButton(label, callback_data=f"cat:{key}")] for key, label in CATEGORIES.items()]
+    if user_premium.get(user_id, False):
+        current_filter = user_filters.get(user_id)
+        if current_filter == 'budget':
+            filter_label = "🎯 Фильтр: бюджетный"
+        elif current_filter == 'middle':
+            filter_label = "🎯 Фильтр: средний"
+        elif current_filter == 'premium':
+            filter_label = "🎯 Фильтр: премиум"
+        else:
+            filter_label = "🎯 Фильтр по бюджету"
+        buttons.append([InlineKeyboardButton(filter_label, callback_data="filter")])
     return InlineKeyboardMarkup(buttons)
 
 def build_gift_keyboard(category: str) -> InlineKeyboardMarkup:
@@ -190,28 +209,36 @@ def build_gift_keyboard(category: str) -> InlineKeyboardMarkup:
         [InlineKeyboardButton("↩️ Выбрать категорию", callback_data="menu")],
     ])
 
+# ============================================================
+# ОБРАБОТЧИКИ
+# ============================================================
+
 async def start(update: Update, context) -> None:
     user_id = update.effective_user.id
     if user_id not in user_requests:
         user_requests[user_id] = 0
+    if user_id not in user_last_date:
+        user_last_date[user_id] = date.today().isoformat()
     await update.message.reply_text(
         "🎁 *Подарочный гуру*\n\n"
         "Привет! Устал ломать голову над подарками? Я помогу.\n"
         "5 идей — в подарок от меня. Хочешь ещё? Премиум открывает безлимит за 199 ₽.\n\n"
         "Просто выбери, кому ищем подарок 👇",
         parse_mode="Markdown",
-        reply_markup=build_category_keyboard(),
+        reply_markup=get_main_keyboard(user_id),
     )
 
 async def help_command(update: Update, context) -> None:
+    user_id = update.effective_user.id
     await update.message.reply_text(
         "🎁 *Подарочный гуру*\n\n"
         "Команды:\n"
         "/start — показать меню выбора категории\n"
         "/help — это сообщение\n"
         "/premium — купить безлимит за 199 ₽\n\n"
-        "Бесплатных идей — 5. Премиум даёт безлимит, фильтры и сохранение списка.",
+        "Бесплатно — 5 идей в день. Премиум даёт безлимит, фильтры по бюджету и сохранение списка.",
         parse_mode="Markdown",
+        reply_markup=get_main_keyboard(user_id),
     )
 
 async def premium(update: Update, context) -> None:
@@ -223,9 +250,23 @@ async def premium(update: Update, context) -> None:
         "✅ *Фильтр по бюджету* (бюджетный, средний, премиум)\n"
         "✅ *Сохранение понравившихся идей*\n\n"
         "Скоро оплата будет доступна. Следите за обновлениями!\n\n"
-        "А пока можете продолжать пользоваться бесплатными идеями (осталось их счётчик).",
+        "А пока можете продолжать пользоваться бесплатными идеями (осталось счётчик).",
         parse_mode="Markdown"
     )
+
+async def activate_premium(update: Update, context) -> None:
+    admin_id = 426916872  # ЗАМЕНИ НА СВОЙ TELEGRAM ID (можно узнать у @userinfobot)
+    if update.effective_user.id != admin_id:
+        await update.message.reply_text("⛔ У вас нет прав для этой команды.")
+        return
+    try:
+        user_id = int(context.args[0])
+        user_premium[426916872] = True
+        user_requests[user_id] = 0  # сбросим счётчик
+        # дату последнего сброса не трогаем, чтобы не обнулять лимит принудительно
+        await update.message.reply_text(f"✅ Премиум активирован для пользователя {user_id}!")
+    except (IndexError, ValueError):
+        await update.message.reply_text("❗ Используйте: /activate ID_пользователя")
 
 async def button_callback(update: Update, context) -> None:
     query = update.callback_query
@@ -234,47 +275,84 @@ async def button_callback(update: Update, context) -> None:
     user_id = update.effective_user.id
 
     # Проверяем, премиум ли пользователь
-    if user_premium.get(user_id, False):
-        premium_active = True
-    else:
-        premium_active = False
+    premium_active = user_premium.get(user_id, False)
 
+    # Обработка меню и категорий
     if data == "menu":
         await query.edit_message_text(
             "🎁 *Подарочный гуру*\n\nВыберите категорию:",
             parse_mode="Markdown",
-            reply_markup=build_category_keyboard(),
+            reply_markup=get_main_keyboard(user_id),
+        )
+        return
+
+    if data == "filter":
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("💰 Бюджетный (до 1500₽)", callback_data="filter_budget")],
+            [InlineKeyboardButton("💰 Средний (1500-5000₽)", callback_data="filter_middle")],
+            [InlineKeyboardButton("💰 Премиум (от 5000₽)", callback_data="filter_premium")],
+            [InlineKeyboardButton("🚫 Отключить фильтр", callback_data="filter_off")],
+            [InlineKeyboardButton("↩️ Назад", callback_data="menu")]
+        ])
+        await query.edit_message_text(
+            "🎯 *Выберите бюджет*:\n\n"
+            "Фильтр будет применяться при подборе идей подарков.",
+            parse_mode="Markdown",
+            reply_markup=keyboard
+        )
+        return
+
+    if data.startswith("filter_"):
+        filter_type = data.split("_")[1]
+        if filter_type == "budget":
+            user_filters[user_id] = 'budget'
+            text = "✅ Установлен фильтр: *бюджетный* (до 1500 ₽)"
+        elif filter_type == "middle":
+            user_filters[user_id] = 'middle'
+            text = "✅ Установлен фильтр: *средний* (1500-5000 ₽)"
+        elif filter_type == "premium":
+            user_filters[user_id] = 'premium'
+            text = "✅ Установлен фильтр: *премиум* (от 5000 ₽)"
+        elif filter_type == "off":
+            user_filters[user_id] = None
+            text = "✅ Фильтр отключён"
+        else:
+            text = "❌ Неизвестный фильтр"
+        await query.edit_message_text(
+            text + "\n\nТеперь при выборе категории бот будет учитывать ваш бюджет.",
+            parse_mode="Markdown",
+            reply_markup=get_main_keyboard(user_id)
         )
         return
 
     if data.startswith("cat:"):
         category = data.split(":", 1)[1]
-        
-if not premium_active:
-    today = date.today().isoformat()
-    last = user_last_date.get(user_id)
-    if last != today:
-        # Новый день — сбрасываем счётчик
-        user_requests[user_id] = 0
-        user_last_date[user_id] = today
-    count = user_requests.get(user_id, 0)
-    if count >= MAX_FREE:
-        await query.edit_message_text(
-            "❌ *Лимит бесплатных идей на сегодня исчерпан!*\n\n"
-            "Подписка за *199 ₽* откроет:\n"
-            "✅ 200 идей в день\n"
-            "✅ Фильтры по бюджету и полу\n"
-            "✅ Сохранение списка и экспорт\n\n"
-            "Нажмите /premium, чтобы оформить.",
-            parse_mode="Markdown",
-            reply_markup=build_category_keyboard(),
-        )
-        return
-    # увеличиваем счётчик
-    user_requests[user_id] = count + 1
 
-        # Выдаём идею
-        gift = get_random_gift(category)
+        # Если не премиум, проверяем лимит по дням
+        if not premium_active:
+            today = date.today().isoformat()
+            last = user_last_date.get(user_id)
+            if last != today:
+                user_requests[user_id] = 0
+                user_last_date[user_id] = today
+            count = user_requests.get(user_id, 0)
+            if count >= MAX_FREE:
+                await query.edit_message_text(
+                    "❌ *Лимит бесплатных идей на сегодня исчерпан!*\n\n"
+                    "Подписка за *199 ₽* откроет:\n"
+                    "✅ 200 идей в день\n"
+                    "✅ Фильтры по бюджету и полу\n"
+                    "✅ Сохранение списка и экспорт\n\n"
+                    "Нажмите /premium, чтобы оформить.",
+                    parse_mode="Markdown",
+                    reply_markup=get_main_keyboard(user_id),
+                )
+                return
+            user_requests[user_id] = count + 1
+
+        # Получаем фильтр (только для премиум)
+        price_filter = user_filters.get(user_id) if premium_active else None
+        gift = get_random_gift(category, price_filter)
         category_label = CATEGORIES.get(category, category)
         text = f"*Идея подарка — {category_label}*\n\n{format_gift_message(gift)}"
         await query.edit_message_text(
@@ -283,6 +361,7 @@ if not premium_active:
             reply_markup=build_gift_keyboard(category),
             disable_web_page_preview=True,
         )
+        return
 
 async def error_handler(update: object, context) -> None:
     if isinstance(context.error, Conflict):
@@ -310,6 +389,7 @@ def main() -> None:
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("premium", premium))
+    application.add_handler(CommandHandler("activate", activate_premium))
     application.add_handler(CallbackQueryHandler(button_callback))
     application.add_error_handler(error_handler)
 
