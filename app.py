@@ -12,7 +12,7 @@ import asyncio
 import threading
 from datetime import date
 
-from flask import Flask
+from flask import Flask, request  # добавлен request для webhook
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.error import Conflict
 from telegram.ext import (
@@ -23,7 +23,7 @@ from telegram.ext import (
 )
 
 # ============================================================
-# Flask-сервер для healthcheck (чтобы Render не убивал процесс)
+# Flask-сервер для healthcheck и будущего webhook
 # ============================================================
 flask_app = Flask(__name__)
 
@@ -34,6 +34,36 @@ def home():
 @flask_app.route('/health')
 def health():
     return "OK", 200
+
+# Пока webhook Prodamus не настроен, закомментируем, чтобы не было ошибок.
+# Если понадобится, раскомментируй и укажи свой секретный ключ.
+"""
+import hashlib
+import json
+
+PRODAMUS_SECRET_KEY = "ТВОЙ_СЕКРЕТНЫЙ_КЛЮЧ"
+
+@flask_app.route('/webhook', methods=['POST'])
+def prodamus_webhook():
+    signature = request.headers.get('Signature')
+    if not signature:
+        return "Missing signature", 400
+    data = request.get_json()
+    if not data:
+        return "Invalid data", 400
+    if data.get('status') == 'success':
+        user_id = data.get('order_id')
+        if user_id:
+            user_id = int(user_id)
+            user_premium[user_id] = True
+            user_requests[user_id] = 0
+            logger.info(f"Premium activated for user {user_id} via Prodamus")
+            return "OK", 200
+        else:
+            logger.warning("No user_id in webhook data")
+            return "No user_id", 400
+    return "Ignored", 200
+"""
 
 def run_flask():
     port = int(os.environ.get("PORT", 8080))
@@ -49,6 +79,7 @@ user_premium = {}       # user_id -> True/False
 user_last_date = {}     # user_id -> дата последнего сброса (YYYY-MM-DD)
 user_filters = {}       # user_id -> 'budget', 'middle', 'premium' или None
 MAX_FREE = 5
+ADMIN_ID = 426916872    # Твой Telegram ID (замени, если нужно)
 
 # ============================================================
 # БАЗА ПОДАРКОВ (исправленная версия)
@@ -255,15 +286,13 @@ async def premium(update: Update, context) -> None:
     )
 
 async def activate_premium(update: Update, context) -> None:
-    admin_id = 426916872  # ЗАМЕНИ НА СВОЙ TELEGRAM ID (можно узнать у @userinfobot)
-    if update.effective_user.id != admin_id:
+    if update.effective_user.id != ADMIN_ID:
         await update.message.reply_text("⛔ У вас нет прав для этой команды.")
         return
     try:
         user_id = int(context.args[0])
-        user_premium[426916872] = True
+        user_premium[user_id] = True
         user_requests[user_id] = 0  # сбросим счётчик
-        # дату последнего сброса не трогаем, чтобы не обнулять лимит принудительно
         await update.message.reply_text(f"✅ Премиум активирован для пользователя {user_id}!")
     except (IndexError, ValueError):
         await update.message.reply_text("❗ Используйте: /activate ID_пользователя")
