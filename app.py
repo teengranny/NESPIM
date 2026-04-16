@@ -10,9 +10,10 @@ import os
 import random
 import asyncio
 import threading
+import sqlite3
 from datetime import date
 
-from flask import Flask, request  # добавлен request для webhook
+from flask import Flask, request
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.error import Conflict
 from telegram.ext import (
@@ -23,7 +24,7 @@ from telegram.ext import (
 )
 
 # ============================================================
-# Flask-сервер для healthcheck и будущего webhook
+# Flask-сервер для healthcheck (чтобы Render не убивал процесс)
 # ============================================================
 flask_app = Flask(__name__)
 
@@ -35,36 +36,6 @@ def home():
 def health():
     return "OK", 200
 
-# Пока webhook Prodamus не настроен, закомментируем, чтобы не было ошибок.
-# Если понадобится, раскомментируй и укажи свой секретный ключ.
-"""
-import hashlib
-import json
-
-PRODAMUS_SECRET_KEY = "ТВОЙ_СЕКРЕТНЫЙ_КЛЮЧ"
-
-@flask_app.route('/webhook', methods=['POST'])
-def prodamus_webhook():
-    signature = request.headers.get('Signature')
-    if not signature:
-        return "Missing signature", 400
-    data = request.get_json()
-    if not data:
-        return "Invalid data", 400
-    if data.get('status') == 'success':
-        user_id = data.get('order_id')
-        if user_id:
-            user_id = int(user_id)
-            user_premium[user_id] = True
-            user_requests[user_id] = 0
-            logger.info(f"Premium activated for user {user_id} via Prodamus")
-            return "OK", 200
-        else:
-            logger.warning("No user_id in webhook data")
-            return "No user_id", 400
-    return "Ignored", 200
-"""
-
 def run_flask():
     port = int(os.environ.get("PORT", 8080))
     flask_app.run(host="0.0.0.0", port=port)
@@ -72,20 +43,64 @@ def run_flask():
 threading.Thread(target=run_flask, daemon=True).start()
 
 # ============================================================
+# РАБОТА С БАЗОЙ ДАННЫХ SQLite (постоянное хранение премиума)
+# ============================================================
+DB_PATH = os.path.join(os.path.dirname(__file__), 'premium.db')
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS premium_users
+                 (user_id INTEGER PRIMARY KEY)''')
+    conn.commit()
+    conn.close()
+
+def add_premium_user(user_id: int):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('INSERT OR IGNORE INTO premium_users (user_id) VALUES (?)', (user_id,))
+    conn.commit()
+    conn.close()
+
+def remove_premium_user(user_id: int):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('DELETE FROM premium_users WHERE user_id = ?', (user_id,))
+    conn.commit()
+    conn.close()
+
+def is_premium_user(user_id: int) -> bool:
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('SELECT 1 FROM premium_users WHERE user_id = ?', (user_id,))
+    result = c.fetchone()
+    conn.close()
+    return result is not None
+
+def load_premium_users():
+    """Загрузить всех премиум-пользователей в словарь user_premium при старте"""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('SELECT user_id FROM premium_users')
+    rows = c.fetchall()
+    conn.close()
+    return {row[0]: True for row in rows}
+
+# ============================================================
 # Хранилище для счётчиков, дат, премиум-статуса и фильтров
 # ============================================================
 user_requests = {}      # user_id -> количество идей за сегодня
-user_premium = {}       # user_id -> True/False
+user_premium = {}       # user_id -> True/False (загружается из БД)
 user_last_date = {}     # user_id -> дата последнего сброса (YYYY-MM-DD)
 user_filters = {}       # user_id -> 'budget', 'middle', 'premium' или None
 MAX_FREE = 5
 ADMIN_ID = 426916872    # Твой Telegram ID (замени, если нужно)
 
 # ============================================================
-# БАЗА ПОДАРКОВ (исправленная версия)
+# БАЗА ПОДАРКОВ (исправленная версия с новыми описаниями)
 # ============================================================
 GIFTS_DB = {
-      "man": [
+    "man": [
         {"title": "Умные часы с мониторингом здоровья", "emoji": "⌚", "priceType": "premium", "description": "Отслеживают пульс, сон и калории. Мотивируют больше двигаться.", "ozonLink": "https://takprdm.ru/0W944W82VmCiW7u0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F117603041%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJPiD1a"},
         {"title": "Набор инструментов в кейсе", "emoji": "🔧", "priceType": "middle", "description": "Упорядочивают инструменты. Выручают при мелком ремонте.", "ozonLink": "https://takprdm.ru/0W944W82VmChQ0C0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F49844802%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJPiD1a"},
         {"title": "Термокружка с подогревом от USB", "emoji": "🥤", "priceType": "budget", "description": "Заряжается от ноутбука. Сохраняет кофе горячим часами.", "ozonLink": "https://ozon.ru/click/usb_heated_mug"},
@@ -110,7 +125,7 @@ GIFTS_DB = {
         {"title": "Непромокаемый рюкзак", "emoji": "🎒", "priceType": "premium", "description": "Защищает технику в дождь. Удобен для работы и путешествий.", "ozonLink": "https://ozon.ru/click/temp"},
         {"title": "Настольная игра-стратегия", "emoji": "🎲", "priceType": "budget", "description": "Тренирует логику. Объединяет друзей за одним столом.", "ozonLink": "https://ozon.ru/click/temp"},
     ],
-       "woman": [
+    "woman": [
         {"title": "Набор премиум-косметики", "emoji": "💄", "priceType": "premium", "description": "Дарит коже здоровье и сияние. Полный ритуал ухода в одной коробке.", "ozonLink": "https://ozon.ru/click/premium_cosmetics_set"},
         {"title": "Шарф из кашемира", "emoji": "🧣", "priceType": "middle", "description": "Согревает в холода. Добавляет образу элегантности и уюта.", "ozonLink": "https://ozon.ru/click/cashmere_scarf"},
         {"title": "Аромадиффузор с маслами", "emoji": "🕯️", "priceType": "middle", "description": "Наполняет дом приятными ароматами. Расслабляет после рабочего дня.", "ozonLink": "https://ozon.ru/click/aroma_diffuser_oils"},
@@ -121,7 +136,7 @@ GIFTS_DB = {
         {"title": "Набор ароматических свечей", "emoji": "🕯️", "priceType": "budget", "description": "Создают романтическую атмосферу. Наполняют дом теплом и уютом.", "ozonLink": "https://ozon.ru/click/handmade_candles_set"},
         {"title": "Аромасаше для гардероба", "emoji": "🌼", "priceType": "budget", "description": "Пропитывают одежду нежным запахом. Больше не нужен освежитель.", "ozonLink": "https://ozon.ru/click/temp"},
         {"title": "Шёлковый шарф с принтом", "emoji": "🧣", "priceType": "middle", "description": "Добавляет яркий акцент любому наряду. Лёгкий, приятный на ощупь.", "ozonLink": "https://ozon.ru/click/temp"},
-        {"title": "Массажёр для лица с подогревом", "emoji": "💆‍♀️", "priceType": "middle", "description": "Р азглаживает морщины, снимает отёки. Домашний SPA-ритуал.", "ozonLink": "https://ozon.ru/click/temp"},
+        {"title": "Массажёр для лица с подогревом", "emoji": "💆‍♀️", "priceType": "middle", "description": "Разглаживает морщины, снимает отёки. Домашний SPA-ритуал.", "ozonLink": "https://ozon.ru/click/temp"},
         {"title": "Натуральная косметика ручной работы", "emoji": "🧴", "priceType": "premium", "description": "Состоит из природных компонентов. Бережно ухаживает за кожей.", "ozonLink": "https://ozon.ru/click/temp"},
         {"title": "Фотоальбом в кожаном переплёте", "emoji": "🖼️", "priceType": "middle", "description": "Сохраняет важные моменты на десятилетия. Приятно перелистывать.", "ozonLink": "https://ozon.ru/click/temp"},
         {"title": "Умные весы с анализом тела", "emoji": "⚖️", "priceType": "premium", "description": "Показывают процент жира, мышц, воды. Помогают следить за фигурой.", "ozonLink": "https://ozon.ru/click/temp"},
@@ -135,7 +150,7 @@ GIFTS_DB = {
         {"title": "Профессиональные кисти для макияжа", "emoji": "🪞", "priceType": "premium", "description": "Создают безупречный тон и растушёвку. Инструменты визажиста.", "ozonLink": "https://ozon.ru/click/temp"},
         {"title": "Абонемент в СПА на месяц", "emoji": "🧖‍♀️", "priceType": "premium", "description": "Дарит полное расслабление и уход. Лучшее, что можно подарить себе.", "ozonLink": "https://ozon.ru/click/temp"},
     ],
-      "child": [
+    "child": [
         {"title": "Конструктор с дополненной реальностью", "emoji": "🧩", "priceType": "middle", "description": "Оживает на экране смартфона. Развивает логику и воображение.", "ozonLink": "https://ozon.ru/click/ar_construction_set"},
         {"title": "Велосипед с доп. колёсами", "emoji": "🚲", "priceType": "middle", "description": "Учит кататься без страха. Дарит свободу движения и веселье.", "ozonLink": "https://ozon.ru/click/bike_training_wheels"},
         {"title": "Набор для научных опытов", "emoji": "🔬", "priceType": "budget", "description": "Пробуждает интерес к химии и физике. Можно вырастить кристаллы или извергнуть вулкан.", "ozonLink": "https://ozon.ru/click/science_experiment_kit"},
@@ -160,7 +175,7 @@ GIFTS_DB = {
         {"title": "Акварельные краски и кисти", "emoji": "🖌️", "priceType": "budget", "description": "Позволяют делать первые шаги в живописи. Яркие цвета, хорошее качество.", "ozonLink": "https://ozon.ru/click/temp"},
         {"title": "Интерактивный глобус", "emoji": "🌍", "priceType": "premium", "description": "Рассказывает о странах, животных, достопримечательностях. С дополненной реальностью.", "ozonLink": "https://ozon.ru/click/temp"},
     ],
-       "colleague": [
+    "colleague": [
         {"title": "Беспроводная зарядная станция", "emoji": "🔋", "priceType": "middle", "description": "Заряжает телефон, часы, наушники одновременно. Избавляет от проводов на столе.", "ozonLink": "https://ozon.ru/click/wireless_charging_station"},
         {"title": "Ежедневник с персонализацией", "emoji": "📓", "priceType": "budget", "description": "Помогает не забывать о задачах. Можно добавить имя или логотип.", "ozonLink": "https://ozon.ru/click/personalized_notebook"},
         {"title": "Кружка-хамелеон", "emoji": "☕", "priceType": "budget", "description": "Меняет цвет от горячего напитка. Поднимает настроение в офисе.", "ozonLink": "https://takprdm.ru/0W944W82VmCiLsm0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F15462468%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJPiD1a"},
@@ -288,8 +303,9 @@ async def activate_premium(update: Update, context) -> None:
         return
     try:
         user_id = int(context.args[0])
-        user_premium[user_id] = True
-        user_requests[user_id] = 0  # сбросим счётчик
+        add_premium_user(user_id)       # сохраняем в БД
+        user_premium[user_id] = True    # обновляем кэш
+        user_requests[user_id] = 0      # сбрасываем счётчик
         await update.message.reply_text(f"✅ Премиум активирован для пользователя {user_id}!")
     except (IndexError, ValueError):
         await update.message.reply_text("❗ Используйте: /activate ID_пользователя")
@@ -300,7 +316,7 @@ async def button_callback(update: Update, context) -> None:
     data = query.data
     user_id = update.effective_user.id
 
-    # Проверяем, премиум ли пользователь
+    # Проверяем, премиум ли пользователь (сначала из кэша, но кэш синхронизирован с БД)
     premium_active = user_premium.get(user_id, False)
 
     # Обработка меню и категорий
@@ -406,6 +422,11 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 def main() -> None:
+    # Инициализируем базу данных и загружаем премиум-пользователей
+    init_db()
+    global user_premium
+    user_premium = load_premium_users()
+
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     if not token:
         raise RuntimeError("TELEGRAM_BOT_TOKEN environment variable is not set.")
