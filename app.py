@@ -92,15 +92,15 @@ def load_premium_users():
 user_requests = {}      # user_id -> количество идей за сегодня
 user_premium = {}       # user_id -> True/False (загружается из БД)
 user_last_date = {}     # user_id -> дата последнего сброса (YYYY-MM-DD)
-user_filters = {}       # user_id -> 'budget', 'middle', 'premium' или None
+user_filters = {}       # user_id -> 'budget', 'middle', 'premium' или None, а также 'gender_man', 'gender_woman'
 MAX_FREE = 5
 ADMIN_ID = 426916872    # Твой Telegram ID (замени, если нужно)
 
 # ============================================================
-# БАЗА ПОДАРКОВ (исправленная версия с новыми описаниями)
+# БАЗА ПОДАРКОВ (исправленная версия с новыми ссылками)
 # ============================================================
 GIFTS_DB = {
-     "man": [
+    "man": [
         {"title": "Умные часы с мониторингом здоровья", "emoji": "⌚", "priceType": "premium", "description": "Отслеживают пульс, сон и калории. Мотивируют больше двигаться.", "ozonLink": "https://takprdm.ru/0W944W82VmCiW7u0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F117603041%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJPiD1a"},
         {"title": "Набор инструментов в кейсе", "emoji": "🔧", "priceType": "middle", "description": "Упорядочивают инструменты. Выручают при мелком ремонте.", "ozonLink": "https://takprdm.ru/0W944W82VmChQ0C0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F49844802%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJPiD1a"},
         {"title": "Термокружка с подогревом от USB", "emoji": "🥤", "priceType": "budget", "description": "Заряжается от ноутбука. Сохраняет кофе горячим часами.", "ozonLink": "https://takprdm.ru/0W944W82iWCikk40/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F808840619%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJNKvJZ"},
@@ -124,15 +124,15 @@ GIFTS_DB = {
         {"title": "Непромокаемый рюкзак", "emoji": "🎒", "priceType": "premium", "description": "Защищает технику в дождь. Удобен для работы и путешествий.", "ozonLink": "https://takprdm.ru/0W944W82VmCjDtG0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F221256950%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJPiD1a"},
         {"title": "Настольная игра-стратегия", "emoji": "🎲", "priceType": "budget", "description": "Тренирует логику. Объединяет друзей за одним столом.", "ozonLink": "https://takprdm.ru/0W944W82iWCiq4e0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F557293327%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJNKvJZ"},
     ],
-       "woman": [
+    "woman": [
         {"title": "Набор премиум-косметики", "emoji": "💄", "priceType": "premium", "description": "Дарит коже здоровье и сияние. Полный ритуал ухода в одной коробке.", "ozonLink": "https://ozon.ru/click/premium_cosmetics_set"},
         {"title": "Шарф из кашемира", "emoji": "🧣", "priceType": "middle", "description": "Согревает в холода. Добавляет образу элегантности и уюта.", "ozonLink": "https://ozon.ru/click/cashmere_scarf"},
-        {"title": "Аромадиффузор с маслами", "emoji": "🕯️", "priceType": "middle", "description": "Наполняет дом приятными ароматами. Расслабляет после рабочего дня.", "ozonLink": "https://ozon.ru/click/aroma_diffuser_oils"},
-        {"title": "Книга в коллекционном переплёте", "emoji": "📖", "priceType": "budget", "description": "Радует глаз и душу. Идеальный подарок для любительницы чтения.", "ozonLink": "https://ozon.ru/click/collector_book"},
+        {"title": "Аромадиффузор с маслами", "emoji": "🕯️", "priceType": "middle", "description": "Наполняет дом приятными ароматами. Расслабляет после рабочего дня.", "ozonLink": "https://takprdm.ru/0W944W82IGCe47W0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F332858245%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJNHZn6"},
+        {"title": "Книга в коллекционном переплёте", "emoji": "📖", "priceType": "budget", "description": "Радует глаз и душу. Идеальный подарок для любительницы чтения.", "ozonLink": "https://takprdm.ru/0W944W82IGCeuJu0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F333489541%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJNHZn6"},
         {"title": "Набор для домашнего спа", "emoji": "🧴", "priceType": "middle", "description": "Устраивает салонный уход дома. Пена, скраб, маска — всё включено.", "ozonLink": "https://ozon.ru/click/home_spa_kit"},
-        {"title": "Сумка-тоут из экокожи", "emoji": "👜", "priceType": "premium", "description": "Вместительная и стильная. Подходит и для офиса, и для прогулок.", "ozonLink": "https://ozon.ru/click/eco_leather_tote"},
-        {"title": "Умное зеркало для макияжа", "emoji": "🪞", "priceType": "premium", "description": "Подсвечивает лицо, как в студии. Помогает наносить мейкап идеально.", "ozonLink": "https://ozon.ru/click/smart_makeup_mirror"},
-        {"title": "Набор ароматических свечей", "emoji": "🕯️", "priceType": "budget", "description": "Создают романтическую атмосферу. Наполняют дом теплом и уютом.", "ozonLink": "https://ozon.ru/click/handmade_candles_set"},
+        {"title": "Сумка-тоут из экокожи", "emoji": "👜", "priceType": "premium", "description": "Вместительная и стильная. Подходит и для офиса, и для прогулок.", "ozonLink": "https://takprdm.ru/0W944W82VmCjFCK0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F175293507%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJPiD1a"},
+        {"title": "Умное зеркало для макияжа", "emoji": "🪞", "priceType": "premium", "description": "Подсвечивает лицо, как в студии. Помогает наносить мейкап идеально.", "ozonLink": "https://takprdm.ru/0W944W82VmCiA9C0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F212800299%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJPiD1a"},
+        {"title": "Набор ароматических свечей", "emoji": "🕯️", "priceType": "budget", "description": "Создают романтическую атмосферу. Наполняют дом теплом и уютом.", "ozonLink": "https://takprdm.ru/0W944W82VmCh1yC0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F544808808%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJPiD1a"},
         {"title": "Аромасаше для гардероба", "emoji": "🌼", "priceType": "budget", "description": "Пропитывают одежду нежным запахом. Больше не нужен освежитель.", "ozonLink": "https://takprdm.ru/0W944W82IGCdb180/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F15861058%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJNHZn6"},
         {"title": "Шёлковый шарф с принтом", "emoji": "🧣", "priceType": "middle", "description": "Добавляет яркий акцент любому наряду. Лёгкий, приятный на ощупь.", "ozonLink": None},
         {"title": "Автоматический массажёр для лица", "emoji": "💆‍♀️", "priceType": "middle", "description": "Разглаживает морщины, снимает отёки. Домашний SPA-ритуал.", "ozonLink": "https://takprdm.ru/0W944W82VmChOeG0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F30027837%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJPiD1a"},
@@ -149,15 +149,15 @@ GIFTS_DB = {
         {"title": "Кисти для макияжа профессиональные", "emoji": "🪞", "priceType": "budget", "description": "Создают безупречный тон и растушёвку. Инструменты визажиста.", "ozonLink": "https://takprdm.ru/0W944W82IGCdR_80/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F18572180%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJNHZn6"},
         {"title": "Абонемент в СПА на месяц", "emoji": "🧖‍♀️", "priceType": "premium", "description": "Дарит полное расслабление и уход. Лучшее, что можно подарить себе.", "ozonLink": None},
     ],
-      "child": [
+    "child": [
         {"title": "Конструктор с дополненной реальностью", "emoji": "🧩", "priceType": "middle", "description": "Оживает на экране смартфона. Развивает логику и воображение.", "ozonLink": "https://ozon.ru/click/ar_construction_set"},
         {"title": "Велосипед с доп. колёсами", "emoji": "🚲", "priceType": "middle", "description": "Учит кататься без страха. Дарит свободу движения и веселье.", "ozonLink": "https://ozon.ru/click/bike_training_wheels"},
-        {"title": "Набор для научных опытов", "emoji": "🔬", "priceType": "budget", "description": "Пробуждает интерес к химии и физике. Можно вырастить кристаллы или извергнуть вулкан.", "ozonLink": "https://ozon.ru/click/science_experiment_kit"},
-        {"title": "Интерактивный робот", "emoji": "🤖", "priceType": "middle", "description": "Программируется, танцует, отвечает на команды. Развивает алгоритмическое мышление.", "ozonLink": "https://ozon.ru/click/interactive_robot"},
-        {"title": "Настольная игра для семьи", "emoji": "🎲", "priceType": "budget", "description": "Объединяет всех за одним столом. Учит стратегии и терпению.", "ozonLink": "https://ozon.ru/click/family_board_game"},
-        {"title": "Рюкзак с 3D-принтом", "emoji": "🎒", "priceType": "budget", "description": "Яркий и практичный. Ребёнок сам захочет собираться в школу.", "ozonLink": "https://ozon.ru/click/character_backpack"},
-        {"title": "Набор для рисования светом", "emoji": "✨", "priceType": "middle", "description": "Создаёт картины в воздухе. Тренирует мелкую моторику и фантазию.", "ozonLink": "https://ozon.ru/click/light_drawing_set"},
-        {"title": "Самокат с подсветкой колёс", "emoji": "🛴", "priceType": "middle", "description": "Безопасен вечером благодаря ярким огням. Дарит радость от катания.", "ozonLink": "https://ozon.ru/click/light_up_scooter"},
+        {"title": "Набор для научных опытов", "emoji": "🔬", "priceType": "budget", "description": "Пробуждает интерес к химии и физике. Можно вырастить кристаллы или извергнуть вулкан.", "ozonLink": "https://takprdm.ru/0W944W83fWCjxoO0/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F2322967333&erid=Y1jgkD6uB6jK1phqkTLTbNJPR5bp"},
+        {"title": "Интерактивный робот", "emoji": "🤖", "priceType": "middle", "description": "Программируется, танцует, отвечает на команды. Развивает алгоритмическое мышление.", "ozonLink": "https://takprdm.ru/0W944W83fWCjyVe0/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F2419097064&erid=Y1jgkD6uB6jK1phqkTLTbNJPR5bp"},
+        {"title": "Настольная игра для семьи", "emoji": "🎲", "priceType": "budget", "description": "Объединяет всех за одним столом. Учит стратегии и терпению.", "ozonLink": "https://takprdm.ru/0W944W83fWClEoa0/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F2195914158&erid=Y1jgkD6uB6jK1phqkTLTbNJPR5bp"},
+        {"title": "Рюкзак с 3D-принтом", "emoji": "🎒", "priceType": "budget", "description": "Яркий и практичный. Ребёнок сам захочет собираться в школу.", "ozonLink": "https://takprdm.ru/0W944W82VmCjDtm0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F176375498%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJPiD1a"},
+        {"title": "Набор для рисования светом", "emoji": "✨", "priceType": "middle", "description": "Создаёт картины в воздухе. Тренирует мелкую моторику и фантазию.", "ozonLink": "https://takprdm.ru/0W944W82rWCjHvy0/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F907937364&erid=Y1jgkD6uB6jK1phqkTLTbNJPRRcZ"},
+        {"title": "Самокат детский", "emoji": "🛴", "priceType": "middle", "description": "Безопасен вечером благодаря ярким огням. Дарит радость от катания.", "ozonLink": "https://takprdm.ru/0W944W82qmCj8e40/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F995363766&erid=Y1jgkD6uB6jK1phqkTLTbNJPQ13N"},
         {"title": "Пищевые фломастеры", "emoji": "🎨", "priceType": "budget", "description": "Безопасные, яркие цвета. Для рисования на еде и украшения десертов.", "ozonLink": "https://takprdm.ru/0W944W82IGCf8di0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F166651319%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJNHZn6"},
         {"title": "Обучающая игрушка", "emoji": "🤖", "priceType": "middle", "description": "Знакомит с буквами и цифрами через игру. Говорит, поёт, задаёт загадки.", "ozonLink": "https://takprdm.ru/0W944W81mGCVs_W0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F143361615%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJNJEaJ"},
         {"title": "Пазл «Космос» 1000 деталей", "emoji": "🧩", "priceType": "middle", "description": "Развивает усидчивость. Итоговая картина украсит стену.", "ozonLink": "https://takprdm.ru/0W944W81mGCUalC0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F523237171%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJNJEaJ"},
@@ -172,11 +172,11 @@ GIFTS_DB = {
         {"title": "Мягкие кубики с буквами", "emoji": "🅰️", "priceType": "middle", "description": "Безопасны даже для самых маленьких. Помогают выучить алфавит.", "ozonLink": "https://takprdm.ru/0W944W81mWCVJBy0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F99808168%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJPQ55b"},
         {"title": "Робот-трансформер", "emoji": "🤖", "priceType": "middle", "description": "Превращается в машину. Управляется дистанционно, участвует в битвах.", "ozonLink": "https://takprdm.ru/0W944W83fWCmfkS0/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F2195932914&erid=Y1jgkD6uB6jK1phqkTLTbNJPR5bp"},
         {"title": "Акварельные краски и кисти", "emoji": "🖌️", "priceType": "budget", "description": "Позволяют делать первые шаги в живописи. Яркие цвета, хорошее качество.", "ozonLink": "https://takprdm.ru/0W944W82VmChGDS0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F14089786%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJPiD1a"},
-        {"title": "Интерактивный глобус", "emoji": "🌍", "priceType": "premium", "description": "Рассказывает о странах, животных, достопримечательностях. С дополненной реальностью.", "ozonLink": "https://takprdm.ru/0W944W82rWCjKZO0/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F1652106182&erid=Y1jgkD6uB6jK1phqkTLTbNJPRRcZ"},
+        {"title": "Интерактивный глобус", "emoji": "🌍", "priceType": "premium", "description": "Интерактивный вращающийся глобус. Наглядно показывает страны и океаны.", "ozonLink": "https://takprdm.ru/0W944W82rWCjKZO0/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F1652106182&erid=Y1jgkD6uB6jK1phqkTLTbNJPRRcZ"},
     ],
-       "colleague": [
+    "colleague": [
         {"title": "Беспроводная зарядная станция", "emoji": "🔋", "priceType": "middle", "description": "Заряжает телефон, часы, наушники одновременно. Избавляет от проводов на столе.", "ozonLink": "https://ozon.ru/click/wireless_charging_station"},
-        {"title": "Ежедневник с персонализацией", "emoji": "📓", "priceType": "budget", "description": "Помогает не забывать о задачах. Можно добавить имя или логотип.", "ozonLink": "https://ozon.ru/click/personalized_notebook"},
+        {"title": "Ежедневник с персонализацией", "emoji": "📓", "priceType": "budget", "description": "Помогает не забывать о задачах. Можно добавить имя или логотип.", "ozonLink": "https://takprdm.ru/0W944W83fWCjzq80/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F2669546666&erid=Y1jgkD6uB6jK1phqkTLTbNJPR5bp"},
         {"title": "Кружка-хамелеон", "emoji": "☕", "priceType": "budget", "description": "Меняет цвет от горячего напитка. Поднимает настроение в офисе.", "ozonLink": "https://takprdm.ru/0W944W82VmCiLsm0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F15462468%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJPiD1a"},
         {"title": "Органайзер для канцелярии", "emoji": "🗂️", "priceType": "budget", "description": "Наводит порядок в ящиках стола. Всё для ручек, стикеров и скрепок.", "ozonLink": "https://takprdm.ru/0W944W83fWCj_8u0/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F3461435095&erid=Y1jgkD6uB6jK1phqkTLTbNJPR5bp"},
         {"title": "Беспроводная мышь эргономичная", "emoji": "🖱️", "priceType": "middle", "description": "Снимает нагрузку с запястья. Удобна при долгой работе за компьютером.", "ozonLink": "https://takprdm.ru/0W944W82VmCiQxC0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F139276681%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJPiD1a"},
@@ -189,7 +189,7 @@ GIFTS_DB = {
         {"title": "Портативный сканер", "emoji": "🖨️", "priceType": "premium", "description": "Цифрует документы за секунды. Компактный, помещается в сумку.", "ozonLink": None},
         {"title": "Ежедневник в кожаном переплёте", "emoji": "🗓️", "priceType": "middle", "description": "Превращает планирование в ритуал. Стильный аксессуар для статусного человека.", "ozonLink": "https://takprdm.ru/0W944W82IGCdVjm0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F51887588%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJNHZn6"},
         {"title": "Наушники для конференций", "emoji": "🎧", "priceType": "premium", "description": "Отсекают шум, передают голос чётко. Идеальны для удалённой работы.", "ozonLink": "https://takprdm.ru/0W944W82VmCiDGq0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F208216536%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJPiD1a"},
-        {"title": "Оригинальные ручки", "emoji": "✒️", "priceType": "budget", "description": "Универсальный выбор. Приятно писать, поднимают настроение.", "ozonLink": "https://takprdm.ru/0W944W82rWCjNVC0/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F2824284705&erid=Y1jgkD6uB6jK1phqkTLTbNJPRRcZ"},
+         {"title": "Оригинальные ручки", "emoji": "✒️", "priceType": "budget", "description": "Универсальный выбор. Приятно писать, поднимают настроение.", "ozonLink": "https://takprdm.ru/0W944W82rWCjNVC0/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F2824284705&erid=Y1jgkD6uB6jK1phqkTLTbNJPRRcZ"},
         {"title": "Подставка для смартфона", "emoji": "📱", "priceType": "budget", "description": "Удобно для видеозвонков. Освобождает руки.", "ozonLink": "https://takprdm.ru/0W944W83fWCj-je0/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F2923468514&erid=Y1jgkD6uB6jK1phqkTLTbNJPR5bp"},
         {"title": "Набор стикеров для заметок", "emoji": "📋", "priceType": "budget", "description": "Яркие, разных цветов. Не дают забыть важные задачи.", "ozonLink": "https://takprdm.ru/0W944W82IGCeCUe0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F12994162%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJNHZn6"},
         {"title": "Термокружка с логотипом", "emoji": "☕", "priceType": "budget", "description": "Корпоративный подарок, который используют каждый день. Долго сохраняет тепло.", "ozonLink": "https://takprdm.ru/0W944W83fmCk4400/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F3285150867&erid=Y1jgkD6uB6jK1phqkTLTbNJPh84B"},
@@ -218,7 +218,7 @@ CATEGORIES = {
 def get_random_gift(category: str, price_filter: str = None) -> dict:
     gifts = GIFTS_DB.get(category, [])
     if not gifts:
-        return {"title": "Скоро добавим идеи", "emoji": "🎁", "priceType": "", "description": "Пожалуйста, выберите другую категорию.", "ozonLink": "https://ozon.ru/"}
+        return {"title": "Скоро добавим идеи", "emoji": "🎁", "priceType": "", "description": "Пожалуйста, выберите другую категорию.", "ozonLink": None}
     if price_filter:
         filtered = [g for g in gifts if g.get("priceType") == price_filter]
         if filtered:
@@ -228,7 +228,10 @@ def get_random_gift(category: str, price_filter: str = None) -> dict:
 def format_gift_message(gift: dict) -> str:
     price_label = PRICE_LABELS.get(gift.get("priceType", ""), "")
     price_line = f"💰 Стоимость: {price_label}\n" if price_label else ""
-    return f"{gift['emoji']} *{gift['title']}*\n{price_line}\n{gift['description']}\n\n[Купить →]({gift['ozonLink']})"
+    base = f"{gift['emoji']} *{gift['title']}*\n{price_line}\n{gift['description']}"
+    if gift.get("ozonLink") and gift["ozonLink"] != "https://ozon.ru/click/temp":
+        base += f"\n\n[Купить →]({gift['ozonLink']})"
+    return base
 
 def get_main_keyboard(user_id: int) -> InlineKeyboardMarkup:
     buttons = [[InlineKeyboardButton(label, callback_data=f"cat:{key}")] for key, label in CATEGORIES.items()]
@@ -240,8 +243,10 @@ def get_main_keyboard(user_id: int) -> InlineKeyboardMarkup:
             filter_label = "🎯 Фильтр: средний"
         elif current_filter == 'premium':
             filter_label = "🎯 Фильтр: премиум"
+        elif current_filter in ('gender_man', 'gender_woman'):
+            filter_label = "🎯 Фильтр по полу активен"
         else:
-            filter_label = "🎯 Фильтр по бюджету"
+            filter_label = "🎯 Фильтры"
         buttons.append([InlineKeyboardButton(filter_label, callback_data="filter")])
     return InlineKeyboardMarkup(buttons)
 
@@ -278,7 +283,7 @@ async def help_command(update: Update, context) -> None:
         "/start — показать меню выбора категории\n"
         "/help — это сообщение\n"
         "/premium — купить безлимит за 199 ₽\n\n"
-        "Бесплатно — 5 идей в день. Премиум даёт безлимит, фильтры по бюджету и сохранение списка.",
+        "Бесплатно — 5 идей в день. Премиум даёт безлимит, фильтры по бюджету и полу, сохранение списка.",
         parse_mode="Markdown",
         reply_markup=get_main_keyboard(user_id),
     )
@@ -290,9 +295,9 @@ async def premium(update: Update, context) -> None:
         "Что вы получите:\n"
         "✅ *Безлимит идей* подарков\n"
         "✅ *Фильтр по бюджету* (бюджетный, средний, премиум)\n"
+        "✅ *Фильтр по полу*\n"
         "✅ *Сохранение понравившихся идей*\n\n"
-        "Скоро оплата будет доступна. Следите за обновлениями!\n\n"
-        "А пока можете продолжать пользоваться бесплатными идеями (осталось счётчик).",
+        "Скоро оплата будет доступна. Следите за обновлениями!",
         parse_mode="Markdown"
     )
 
@@ -302,9 +307,9 @@ async def activate_premium(update: Update, context) -> None:
         return
     try:
         user_id = int(context.args[0])
-        add_premium_user(user_id)       # сохраняем в БД
-        user_premium[user_id] = True    # обновляем кэш
-        user_requests[user_id] = 0      # сбрасываем счётчик
+        add_premium_user(user_id)
+        user_premium[user_id] = True
+        user_requests[user_id] = 0
         await update.message.reply_text(f"✅ Премиум активирован для пользователя {user_id}!")
     except (IndexError, ValueError):
         await update.message.reply_text("❗ Используйте: /activate ID_пользователя")
@@ -315,10 +320,8 @@ async def button_callback(update: Update, context) -> None:
     data = query.data
     user_id = update.effective_user.id
 
-    # Проверяем, премиум ли пользователь (сначала из кэша, но кэш синхронизирован с БД)
     premium_active = user_premium.get(user_id, False)
 
-    # Обработка меню и категорий
     if data == "menu":
         await query.edit_message_text(
             "🎁 *Подарочный гуру*\n\nВыберите категорию:",
@@ -333,11 +336,11 @@ async def button_callback(update: Update, context) -> None:
             [InlineKeyboardButton("💰 Средний (1500-5000₽)", callback_data="filter_middle")],
             [InlineKeyboardButton("💰 Премиум (от 5000₽)", callback_data="filter_premium")],
             [InlineKeyboardButton("🚫 Отключить фильтр", callback_data="filter_off")],
+            [InlineKeyboardButton("👫 Фильтр по полу", callback_data="filter_gender")],
             [InlineKeyboardButton("↩️ Назад", callback_data="menu")]
         ])
         await query.edit_message_text(
-            "🎯 *Выберите бюджет*:\n\n"
-            "Фильтр будет применяться при подборе идей подарков.",
+            "🎯 *Выберите фильтр*:",
             parse_mode="Markdown",
             reply_markup=keyboard
         )
@@ -357,10 +360,44 @@ async def button_callback(update: Update, context) -> None:
         elif filter_type == "off":
             user_filters[user_id] = None
             text = "✅ Фильтр отключён"
+        elif filter_type == "gender":
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("👔 Мужчинам", callback_data="gender_man")],
+                [InlineKeyboardButton("🌸 Женщинам", callback_data="gender_woman")],
+                [InlineKeyboardButton("🚫 Отключить фильтр по полу", callback_data="gender_off")],
+                [InlineKeyboardButton("↩️ Назад", callback_data="filter")]
+            ])
+            await query.edit_message_text(
+                "👫 *Выберите пол*:",
+                parse_mode="Markdown",
+                reply_markup=keyboard
+            )
+            return
         else:
             text = "❌ Неизвестный фильтр"
+        if filter_type != "gender":
+            await query.edit_message_text(
+                text + "\n\nТеперь при выборе категории бот будет учитывать ваш бюджет.",
+                parse_mode="Markdown",
+                reply_markup=get_main_keyboard(user_id)
+            )
+        return
+
+    if data.startswith("gender_"):
+        gender = data.split("_")[1]
+        if gender == "man":
+            user_filters[user_id] = 'gender_man'
+            text = "✅ Вы выбрали подарки для *мужчин*"
+        elif gender == "woman":
+            user_filters[user_id] = 'gender_woman'
+            text = "✅ Вы выбрали подарки для *женщин*"
+        elif gender == "off":
+            user_filters[user_id] = None
+            text = "✅ Фильтр по полу отключён"
+        else:
+            text = "❌ Неизвестный пол"
         await query.edit_message_text(
-            text + "\n\nТеперь при выборе категории бот будет учитывать ваш бюджет.",
+            text,
             parse_mode="Markdown",
             reply_markup=get_main_keyboard(user_id)
         )
@@ -369,7 +406,27 @@ async def button_callback(update: Update, context) -> None:
     if data.startswith("cat:"):
         category = data.split(":", 1)[1]
 
-        # Если не премиум, проверяем лимит по дням
+        # Проверка фильтра по полу
+        gender_filter = user_filters.get(user_id)
+        if gender_filter == 'gender_man' and category != 'man':
+            await query.edit_message_text(
+                "⚠️ *Фильтр по полу активен!*\n\n"
+                "Вы выбрали категорию для женщин, но у вас включён фильтр 'мужчины'.\n"
+                "Используйте '↩️ Выбрать категорию' и выберите '👔 Мужчине' или отключите фильтр по полу в настройках фильтров.",
+                parse_mode="Markdown",
+                reply_markup=get_main_keyboard(user_id),
+            )
+            return
+        if gender_filter == 'gender_woman' and category != 'woman':
+            await query.edit_message_text(
+                "⚠️ *Фильтр по полу активен!*\n\n"
+                "Вы выбрали категорию для мужчин, но у вас включён фильтр 'женщины'.\n"
+                "Используйте '↩️ Выбрать категорию' и выберите '🌸 Женщине' или отключите фильтр по полу в настройках фильтров.",
+                parse_mode="Markdown",
+                reply_markup=get_main_keyboard(user_id),
+            )
+            return
+
         if not premium_active:
             today = date.today().isoformat()
             last = user_last_date.get(user_id)
@@ -391,8 +448,9 @@ async def button_callback(update: Update, context) -> None:
                 return
             user_requests[user_id] = count + 1
 
-        # Получаем фильтр (только для премиум)
         price_filter = user_filters.get(user_id) if premium_active else None
+        if price_filter not in ('budget', 'middle', 'premium'):
+            price_filter = None
         gift = get_random_gift(category, price_filter)
         category_label = CATEGORIES.get(category, category)
         text = f"*Идея подарка — {category_label}*\n\n{format_gift_message(gift)}"
@@ -421,7 +479,6 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 def main() -> None:
-    # Инициализируем базу данных и загружаем премиум-пользователей
     init_db()
     global user_premium
     user_premium = load_premium_users()
