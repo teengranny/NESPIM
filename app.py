@@ -92,12 +92,12 @@ def load_premium_users():
 user_requests = {}      # user_id -> количество идей за сегодня
 user_premium = {}       # user_id -> True/False (загружается из БД)
 user_last_date = {}     # user_id -> дата последнего сброса (YYYY-MM-DD)
-user_filters = {}       # user_id -> 'budget', 'middle', 'premium' или None, а также 'gender_man', 'gender_woman'
+user_filters = {}       # user_id -> 'budget', 'middle', 'premium' или None
 MAX_FREE = 5
 ADMIN_ID = 426916872    # Твой Telegram ID (замени, если нужно)
 
 # ============================================================
-# БАЗА ПОДАРКОВ (исправленная версия с новыми ссылками)
+# БАЗА ПОДАРКОВ (исправленная версия с новыми описаниями)
 # ============================================================
 GIFTS_DB = {
     "man": [
@@ -189,7 +189,7 @@ GIFTS_DB = {
         {"title": "Портативный сканер", "emoji": "🖨️", "priceType": "premium", "description": "Цифрует документы за секунды. Компактный, помещается в сумку.", "ozonLink": None},
         {"title": "Ежедневник в кожаном переплёте", "emoji": "🗓️", "priceType": "middle", "description": "Превращает планирование в ритуал. Стильный аксессуар для статусного человека.", "ozonLink": "https://takprdm.ru/0W944W82IGCdVjm0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F51887588%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJNHZn6"},
         {"title": "Наушники для конференций", "emoji": "🎧", "priceType": "premium", "description": "Отсекают шум, передают голос чётко. Идеальны для удалённой работы.", "ozonLink": "https://takprdm.ru/0W944W82VmCiDGq0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F208216536%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJPiD1a"},
-         {"title": "Оригинальные ручки", "emoji": "✒️", "priceType": "budget", "description": "Универсальный выбор. Приятно писать, поднимают настроение.", "ozonLink": "https://takprdm.ru/0W944W82rWCjNVC0/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F2824284705&erid=Y1jgkD6uB6jK1phqkTLTbNJPRRcZ"},
+        {"title": "Оригинальные ручки", "emoji": "✒️", "priceType": "budget", "description": "Универсальный выбор. Приятно писать, поднимают настроение.", "ozonLink": "https://takprdm.ru/0W944W82rWCjNVC0/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F2824284705&erid=Y1jgkD6uB6jK1phqkTLTbNJPRRcZ"},
         {"title": "Подставка для смартфона", "emoji": "📱", "priceType": "budget", "description": "Удобно для видеозвонков. Освобождает руки.", "ozonLink": "https://takprdm.ru/0W944W83fWCj-je0/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F2923468514&erid=Y1jgkD6uB6jK1phqkTLTbNJPR5bp"},
         {"title": "Набор стикеров для заметок", "emoji": "📋", "priceType": "budget", "description": "Яркие, разных цветов. Не дают забыть важные задачи.", "ozonLink": "https://takprdm.ru/0W944W82IGCeCUe0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F12994162%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJNHZn6"},
         {"title": "Термокружка с логотипом", "emoji": "☕", "priceType": "budget", "description": "Корпоративный подарок, который используют каждый день. Долго сохраняет тепло.", "ozonLink": "https://takprdm.ru/0W944W83fmCk4400/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F3285150867&erid=Y1jgkD6uB6jK1phqkTLTbNJPh84B"},
@@ -243,10 +243,8 @@ def get_main_keyboard(user_id: int) -> InlineKeyboardMarkup:
             filter_label = "🎯 Фильтр: средний"
         elif current_filter == 'premium':
             filter_label = "🎯 Фильтр: премиум"
-        elif current_filter in ('gender_man', 'gender_woman'):
-            filter_label = "🎯 Фильтр по полу активен"
         else:
-            filter_label = "🎯 Фильтры"
+            filter_label = "🎯 Фильтр по бюджету"
         buttons.append([InlineKeyboardButton(filter_label, callback_data="filter")])
     return InlineKeyboardMarkup(buttons)
 
@@ -270,7 +268,7 @@ async def start(update: Update, context) -> None:
         "🎁 *Подарочный гуру*\n\n"
         "Привет! Устал ломать голову над подарками? Я помогу.\n"
         "5 идей — в подарок от меня. Хочешь ещё? Премиум открывает безлимит за 199 ₽.\n\n"
-        "Просто выбери, кому ищем подарок 👇",
+        "Выбери категорию 👇",
         parse_mode="Markdown",
         reply_markup=get_main_keyboard(user_id),
     )
@@ -283,7 +281,7 @@ async def help_command(update: Update, context) -> None:
         "/start — показать меню выбора категории\n"
         "/help — это сообщение\n"
         "/premium — купить безлимит за 199 ₽\n\n"
-        "Бесплатно — 5 идей в день. Премиум даёт безлимит, фильтры по бюджету и полу, сохранение списка.",
+        "Бесплатно — 5 идей в день. Премиум даёт безлимит и фильтр по бюджету.",
         parse_mode="Markdown",
         reply_markup=get_main_keyboard(user_id),
     )
@@ -295,7 +293,6 @@ async def premium(update: Update, context) -> None:
         "Что вы получите:\n"
         "✅ *Безлимит идей* подарков\n"
         "✅ *Фильтр по бюджету* (бюджетный, средний, премиум)\n"
-        "✅ *Фильтр по полу*\n"
         "✅ *Сохранение понравившихся идей*\n\n"
         "Скоро оплата будет доступна. Следите за обновлениями!",
         parse_mode="Markdown"
@@ -307,9 +304,9 @@ async def activate_premium(update: Update, context) -> None:
         return
     try:
         user_id = int(context.args[0])
-        add_premium_user(user_id)
-        user_premium[user_id] = True
-        user_requests[user_id] = 0
+        add_premium_user(user_id)       # сохраняем в БД
+        user_premium[user_id] = True    # обновляем кэш
+        user_requests[user_id] = 0      # сбрасываем счётчик
         await update.message.reply_text(f"✅ Премиум активирован для пользователя {user_id}!")
     except (IndexError, ValueError):
         await update.message.reply_text("❗ Используйте: /activate ID_пользователя")
@@ -336,11 +333,10 @@ async def button_callback(update: Update, context) -> None:
             [InlineKeyboardButton("💰 Средний (1500-5000₽)", callback_data="filter_middle")],
             [InlineKeyboardButton("💰 Премиум (от 5000₽)", callback_data="filter_premium")],
             [InlineKeyboardButton("🚫 Отключить фильтр", callback_data="filter_off")],
-            [InlineKeyboardButton("👫 Фильтр по полу", callback_data="filter_gender")],
             [InlineKeyboardButton("↩️ Назад", callback_data="menu")]
         ])
         await query.edit_message_text(
-            "🎯 *Выберите фильтр*:",
+            "🎯 *Выберите бюджет*:",
             parse_mode="Markdown",
             reply_markup=keyboard
         )
@@ -360,44 +356,10 @@ async def button_callback(update: Update, context) -> None:
         elif filter_type == "off":
             user_filters[user_id] = None
             text = "✅ Фильтр отключён"
-        elif filter_type == "gender":
-            keyboard = InlineKeyboardMarkup([
-                [InlineKeyboardButton("👔 Мужчинам", callback_data="gender_man")],
-                [InlineKeyboardButton("🌸 Женщинам", callback_data="gender_woman")],
-                [InlineKeyboardButton("🚫 Отключить фильтр по полу", callback_data="gender_off")],
-                [InlineKeyboardButton("↩️ Назад", callback_data="filter")]
-            ])
-            await query.edit_message_text(
-                "👫 *Выберите пол*:",
-                parse_mode="Markdown",
-                reply_markup=keyboard
-            )
-            return
         else:
             text = "❌ Неизвестный фильтр"
-        if filter_type != "gender":
-            await query.edit_message_text(
-                text + "\n\nТеперь при выборе категории бот будет учитывать ваш бюджет.",
-                parse_mode="Markdown",
-                reply_markup=get_main_keyboard(user_id)
-            )
-        return
-
-    if data.startswith("gender_"):
-        gender = data.split("_")[1]
-        if gender == "man":
-            user_filters[user_id] = 'gender_man'
-            text = "✅ Вы выбрали подарки для *мужчин*"
-        elif gender == "woman":
-            user_filters[user_id] = 'gender_woman'
-            text = "✅ Вы выбрали подарки для *женщин*"
-        elif gender == "off":
-            user_filters[user_id] = None
-            text = "✅ Фильтр по полу отключён"
-        else:
-            text = "❌ Неизвестный пол"
         await query.edit_message_text(
-            text,
+            text + "\n\nТеперь при выборе категории бот будет учитывать ваш бюджет.",
             parse_mode="Markdown",
             reply_markup=get_main_keyboard(user_id)
         )
@@ -405,27 +367,6 @@ async def button_callback(update: Update, context) -> None:
 
     if data.startswith("cat:"):
         category = data.split(":", 1)[1]
-
-        # Проверка фильтра по полу
-        gender_filter = user_filters.get(user_id)
-        if gender_filter == 'gender_man' and category != 'man':
-            await query.edit_message_text(
-                "⚠️ *Фильтр по полу активен!*\n\n"
-                "Вы выбрали категорию для женщин, но у вас включён фильтр 'мужчины'.\n"
-                "Используйте '↩️ Выбрать категорию' и выберите '👔 Мужчине' или отключите фильтр по полу в настройках фильтров.",
-                parse_mode="Markdown",
-                reply_markup=get_main_keyboard(user_id),
-            )
-            return
-        if gender_filter == 'gender_woman' and category != 'woman':
-            await query.edit_message_text(
-                "⚠️ *Фильтр по полу активен!*\n\n"
-                "Вы выбрали категорию для мужчин, но у вас включён фильтр 'женщины'.\n"
-                "Используйте '↩️ Выбрать категорию' и выберите '🌸 Женщине' или отключите фильтр по полу в настройках фильтров.",
-                parse_mode="Markdown",
-                reply_markup=get_main_keyboard(user_id),
-            )
-            return
 
         if not premium_active:
             today = date.today().isoformat()
@@ -439,7 +380,7 @@ async def button_callback(update: Update, context) -> None:
                     "❌ *Лимит бесплатных идей на сегодня исчерпан!*\n\n"
                     "Подписка за *199 ₽* откроет:\n"
                     "✅ 200 идей в день\n"
-                    "✅ Фильтры по бюджету и полу\n"
+                    "✅ Фильтр по бюджету\n"
                     "✅ Сохранение списка и экспорт\n\n"
                     "Нажмите /premium, чтобы оформить.",
                     parse_mode="Markdown",
@@ -479,6 +420,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 def main() -> None:
+    # Инициализируем базу данных и загружаем премиум-пользователей
     init_db()
     global user_premium
     user_premium = load_premium_users()
