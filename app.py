@@ -126,10 +126,10 @@ GIFTS_DB = {
     ],
     "woman": [
         {"title": "Набор премиум-косметики", "emoji": "💄", "priceType": "premium", "description": "Дарит коже здоровье и сияние. Полный ритуал ухода в одной коробке.", "ozonLink": "https://ozon.ru/click/premium_cosmetics_set"},
-        {"title": "Шарф из кашемира", "emoji": "🧣", "priceType": "middle", "description": "Согревает в холода. Добавляет образу элегантности и уюта.", "ozonLink": "https://ozon.ru/click/cashmere_scarf"},
+        {"title": "Шарф из кашемира", "emoji": "🧣", "priceType": "middle", "description": "Согревает в холода. Добавляет образу элегантности и уюта.", "ozonLink": None},
         {"title": "Аромадиффузор с маслами", "emoji": "🕯️", "priceType": "middle", "description": "Наполняет дом приятными ароматами. Расслабляет после рабочего дня.", "ozonLink": "https://takprdm.ru/0W944W82IGCe47W0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F332858245%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJNHZn6"},
         {"title": "Книга в коллекционном переплёте", "emoji": "📖", "priceType": "budget", "description": "Радует глаз и душу. Идеальный подарок для любительницы чтения.", "ozonLink": "https://takprdm.ru/0W944W82IGCeuJu0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F333489541%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJNHZn6"},
-        {"title": "Набор для домашнего спа", "emoji": "🧴", "priceType": "middle", "description": "Устраивает салонный уход дома. Пена, скраб, маска — всё включено.", "ozonLink": "https://ozon.ru/click/home_spa_kit"},
+        {"title": "Набор для домашнего спа", "emoji": "🧴", "priceType": "middle", "description": "Устраивает салонный уход дома. Пена, скраб, маска — всё включено.", "ozonLink": None},
         {"title": "Сумка-тоут из экокожи", "emoji": "👜", "priceType": "premium", "description": "Вместительная и стильная. Подходит и для офиса, и для прогулок.", "ozonLink": "https://takprdm.ru/0W944W82VmCjFCK0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F175293507%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJPiD1a"},
         {"title": "Умное зеркало для макияжа", "emoji": "🪞", "priceType": "premium", "description": "Подсвечивает лицо, как в студии. Помогает наносить мейкап идеально.", "ozonLink": "https://takprdm.ru/0W944W82VmCiA9C0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F212800299%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJPiD1a"},
         {"title": "Набор ароматических свечей", "emoji": "🕯️", "priceType": "budget", "description": "Создают романтическую атмосферу. Наполняют дом теплом и уютом.", "ozonLink": "https://takprdm.ru/0W944W82VmCh1yC0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F544808808%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJPiD1a"},
@@ -150,8 +150,8 @@ GIFTS_DB = {
         {"title": "Абонемент в СПА на месяц", "emoji": "🧖‍♀️", "priceType": "premium", "description": "Дарит полное расслабление и уход. Лучшее, что можно подарить себе.", "ozonLink": None},
     ],
     "child": [
-        {"title": "Конструктор с дополненной реальностью", "emoji": "🧩", "priceType": "middle", "description": "Оживает на экране смартфона. Развивает логику и воображение.", "ozonLink": "https://ozon.ru/click/ar_construction_set"},
-        {"title": "Велосипед с доп. колёсами", "emoji": "🚲", "priceType": "middle", "description": "Учит кататься без страха. Дарит свободу движения и веселье.", "ozonLink": "https://ozon.ru/click/bike_training_wheels"},
+        {"title": "Конструктор с дополненной реальностью", "emoji": "🧩", "priceType": "middle", "description": "Оживает на экране смартфона. Развивает логику и воображение.", "ozonLink": None},
+        {"title": "Велосипед с доп. колёсами", "emoji": "🚲", "priceType": "middle", "description": "Учит кататься без страха. Дарит свободу движения и веселье.", "ozonLink": None},
         {"title": "Набор для научных опытов", "emoji": "🔬", "priceType": "budget", "description": "Пробуждает интерес к химии и физике. Можно вырастить кристаллы или извергнуть вулкан.", "ozonLink": "https://takprdm.ru/0W944W83fWCjxoO0/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F2322967333&erid=Y1jgkD6uB6jK1phqkTLTbNJPR5bp"},
         {"title": "Интерактивный робот", "emoji": "🤖", "priceType": "middle", "description": "Программируется, танцует, отвечает на команды. Развивает алгоритмическое мышление.", "ozonLink": "https://takprdm.ru/0W944W83fWCjyVe0/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F2419097064&erid=Y1jgkD6uB6jK1phqkTLTbNJPR5bp"},
         {"title": "Настольная игра для семьи", "emoji": "🎲", "priceType": "budget", "description": "Объединяет всех за одним столом. Учит стратегии и терпению.", "ozonLink": "https://takprdm.ru/0W944W83fWClEoa0/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F2195914158&erid=Y1jgkD6uB6jK1phqkTLTbNJPR5bp"},
@@ -175,7 +175,7 @@ GIFTS_DB = {
         {"title": "Интерактивный глобус", "emoji": "🌍", "priceType": "premium", "description": "Интерактивный вращающийся глобус. Наглядно показывает страны и океаны.", "ozonLink": "https://takprdm.ru/0W944W82rWCjKZO0/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F1652106182&erid=Y1jgkD6uB6jK1phqkTLTbNJPRRcZ"},
     ],
     "colleague": [
-        {"title": "Беспроводная зарядная станция", "emoji": "🔋", "priceType": "middle", "description": "Заряжает телефон, часы, наушники одновременно. Избавляет от проводов на столе.", "ozonLink": "https://ozon.ru/click/wireless_charging_station"},
+        {"title": "Беспроводная зарядная станция", "emoji": "🔋", "priceType": "middle", "description": "Заряжает телефон, часы, наушники одновременно. Избавляет от проводов на столе.", "ozonLink": None},
         {"title": "Ежедневник с персонализацией", "emoji": "📓", "priceType": "budget", "description": "Помогает не забывать о задачах. Можно добавить имя или логотип.", "ozonLink": "https://takprdm.ru/0W944W83fWCjzq80/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F2669546666&erid=Y1jgkD6uB6jK1phqkTLTbNJPR5bp"},
         {"title": "Кружка-хамелеон", "emoji": "☕", "priceType": "budget", "description": "Меняет цвет от горячего напитка. Поднимает настроение в офисе.", "ozonLink": "https://takprdm.ru/0W944W82VmCiLsm0/?redirectTo=https%3A%2F%2Fwww.wildberries.ru%2Fcatalog%2F15462468%2Fdetail.aspx&erid=Y1jgkD6uB6jK1phqkTLTbNJPiD1a"},
         {"title": "Органайзер для канцелярии", "emoji": "🗂️", "priceType": "budget", "description": "Наводит порядок в ящиках стола. Всё для ручек, стикеров и скрепок.", "ozonLink": "https://takprdm.ru/0W944W83fWCj_8u0/?redirectTo=https%3A%2F%2Fozon.ru%2Fproduct%2F3461435095&erid=Y1jgkD6uB6jK1phqkTLTbNJPR5bp"},
