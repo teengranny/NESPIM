@@ -268,7 +268,7 @@ async def premium(update: Update, context):
     description = "Безлимит идей подарков + фильтр по бюджету"
     payload = f"premium_{user_id}"
     currency = "RUB"
-    prices = [LabeledPrice("Премиум-доступ (30 дней)", 19900)]
+    prices = [LabeledPrice("Премиум-доступ (30 дней)", 10000)]
     
     await context.bot.send_invoice(
         chat_id=chat_id,
