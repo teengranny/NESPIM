@@ -1,11 +1,10 @@
 # ============================================================
 # ГЕНЕРАТОР ИДЕЙ ПОДАРКОВ — TELEGRAM BOT
 # Запуск: python app.py
-# Требуется: pip install python-telegram-bot==21.10 flask
-# Переменные окружения: TELEGRAM_BOT_TOKEN, PROVIDER_TOKEN
+# Требуется: pip install python-telegram-bot==21.10 flask supabase
+# Переменные окружения: TELEGRAM_BOT_TOKEN, PROVIDER_TOKEN, SUPABASE_URL, SUPABASE_KEY
 # ============================================================
 
-from supabase import create_client, Client
 import uuid
 import logging
 import os
@@ -26,6 +25,8 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+
+from supabase import create_client, Client
 
 # ============================================================
 # Flask-сервер для healthcheck (чтобы Render не убивал процесс)
@@ -49,9 +50,6 @@ threading.Thread(target=run_flask, daemon=True).start()
 # ============================================================
 # РАБОТА С БАЗОЙ ДАННЫХ Supabase
 # ============================================================
-import os
-from supabase import create_client, Client
-
 supabase: Client = create_client(
     os.environ.get("SUPABASE_URL"),
     os.environ.get("SUPABASE_KEY")
@@ -112,7 +110,7 @@ MAX_FREE = 5
 ADMIN_ID = 426916872    # Твой Telegram ID
 
 # ============================================================
-# БАЗА ПОДАРКОВ (сокращённая версия, ты можешь оставить свою полную)
+# БАЗА ПОДАРКОВ (полная, ты её оставляешь как есть)
 # ============================================================
 GIFTS_DB = {
     "man": [
@@ -242,6 +240,8 @@ def get_main_keyboard(user_id: int) -> InlineKeyboardMarkup:
         else:
             filter_label = "🎯 Фильтр по бюджету"
         buttons.append([InlineKeyboardButton(filter_label, callback_data="filter")])
+    # Кнопка поддержки для всех пользователей
+    buttons.append([InlineKeyboardButton("📞 Поддержка", callback_data="support")])
     return InlineKeyboardMarkup(buttons)
 
 def build_gift_keyboard(category: str) -> InlineKeyboardMarkup:
@@ -269,7 +269,7 @@ async def start(update: Update, context):
 async def help_command(update: Update, context):
     user_id = update.effective_user.id
     await update.message.reply_text(
-        "🎁 *Подарочный гуру*\n\nКоманды:\n/start — главное меню\n/help — это сообщение\n/premium — купить безлимит\n\nБесплатно 5 идей в день. Премиум даёт безлимит и фильтр по бюджету.",
+        "🎁 *Подарочный гуру*\n\nКоманды:\n/start — главное меню\n/help — это сообщение\n/premium — купить безлимит\n/support — связаться с администратором\n\nБесплатно 5 идей в день. Премиум даёт безлимит и фильтр по бюджету.",
         parse_mode="Markdown",
         reply_markup=get_main_keyboard(user_id),
     )
@@ -281,7 +281,8 @@ async def premium(update: Update, context):
     description = "Безлимит идей подарков + фильтр по бюджету"
     payload = f"premium_{user_id}"
     currency = "RUB"
-    prices = [LabeledPrice("Премиум-доступ (30 дней)", 8000)]
+    # цена 19900 копеек = 199 руб (или 8000 для теста)
+    prices = [LabeledPrice("Премиум-доступ (30 дней)", 19900)]
     
     await context.bot.send_invoice(
         chat_id=chat_id,
@@ -323,20 +324,20 @@ async def activate_premium(update: Update, context):
     except (IndexError, ValueError):
         await update.message.reply_text("❗ Используйте: /activate ID")
 
-async def button_callback(update: Update, context):
-    query = update.callback_query
-    await query.answer()
-    data = query.data
-    user_id = update.effective_user.id
-    premium_active = user_premium.get(user_id, False)
-
 async def support(update: Update, context):
     await update.message.reply_text(
         "📞 *Связь с администратором*\n\n"
         "Если у вас возникли проблемы с оплатой или есть вопросы, напишите мне лично: @teengranny\n\n"
         "Отвечаю обычно в течение нескольких часов.",
         parse_mode="Markdown"
-    )    
+    )
+
+async def button_callback(update: Update, context):
+    query = update.callback_query
+    await query.answer()
+    data = query.data
+    user_id = update.effective_user.id
+    premium_active = user_premium.get(user_id, False)
 
     if data == "menu":
         await query.edit_message_text(
@@ -379,6 +380,17 @@ async def support(update: Update, context):
             text = "❌ Неизвестный фильтр"
         await query.edit_message_text(
             text + "\n\nТеперь бот будет учитывать ваш бюджет.",
+            parse_mode="Markdown",
+            reply_markup=get_main_keyboard(user_id)
+        )
+        return
+
+    if data == "support":
+        await query.edit_message_text(
+            "📞 *Связь с администратором*\n\n"
+            "Напишите мне лично: @teengranny\n"
+            "Отвечаю в течение нескольких часов.\n\n"
+            "Вы также можете воспользоваться командой /support в любой момент.",
             parse_mode="Markdown",
             reply_markup=get_main_keyboard(user_id)
         )
@@ -449,6 +461,7 @@ def main() -> None:
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("premium", premium))
     application.add_handler(CommandHandler("activate", activate_premium))
+    application.add_handler(CommandHandler("support", support))
     application.add_handler(PreCheckoutQueryHandler(pre_checkout_handler))
     application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_handler))
     application.add_handler(CallbackQueryHandler(button_callback))
@@ -469,4 +482,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-   application.add_handler(CommandHandler("support", support))
