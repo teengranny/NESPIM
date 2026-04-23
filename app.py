@@ -323,7 +323,7 @@ async def support(update: Update, context):
     await update.message.reply_text(
         "📧 *Поддержка*\n\n"
         "Если возникли вопросы или проблемы с оплатой – пишите на почту:\n\n"
-        "[maryaninovan@mail.ru](mailto:maryaninovan@mail.ru)",
+        "maryaninovan@mail.ru",
         parse_mode="Markdown",
         disable_web_page_preview=True
     )
@@ -385,7 +385,7 @@ async def button_callback(update: Update, context):
         await query.edit_message_text(
             "📧 *Поддержка*\n\n"
             "Если возникли вопросы или проблемы с оплатой – пиши на почту:\n\n"
-            "[maryaninovan@mail.ru](mailto:maryaninovan@mail.ru)",
+            "maryaninovan@mail.ru",
             parse_mode="Markdown",
             reply_markup=get_main_keyboard(user_id),
             disable_web_page_preview=True
