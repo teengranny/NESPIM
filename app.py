@@ -387,7 +387,7 @@ async def button_callback(update: Update, context):
 
     if data == "support":
         await query.edit_message_text(
-            "📞 *Связь с администратором*\n\n"
+            "📧 *Связь с администратором*\n\n"
             "Напишите мне лично: @teengranny\n"
             "Отвечаю в течение нескольких часов.\n\n"
             "Вы также можете воспользоваться командой /support в любой момент.",
