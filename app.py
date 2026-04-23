@@ -297,14 +297,20 @@ async def pre_checkout_handler(update: Update, context):
     await query.answer(ok=True)
 
 async def successful_payment_handler(update: Update, context):
+    # Telegram вызывает этот хендлер только при успешной оплате, но добавим лог
     user_id = update.effective_user.id
-    add_premium_user(user_id)
-    user_premium[user_id] = True
-    user_requests[user_id] = 0
-    await update.message.reply_text(
-        "✅ *Оплата прошла успешно!*\n\nПремиум-доступ активирован. Спасибо за поддержку! 🎉",
-        parse_mode="Markdown"
-    )
+    payment = update.message.successful_payment
+    if payment and payment.invoice_payload.startswith("premium_"):
+        add_premium_user(user_id)
+        user_premium[user_id] = True
+        user_requests[user_id] = 0
+        await update.message.reply_text(
+            "✅ *Оплата прошла успешно!*\n\nПремиум-доступ активирован. Спасибо за поддержку! 🎉",
+            parse_mode="Markdown"
+        )
+    else:
+        # Логируем подозрительный вызов
+        logger.warning(f"Strange successful_payment call for user {user_id} without valid payment")
 
 async def activate_premium(update: Update, context):
     if update.effective_user.id != ADMIN_ID:
