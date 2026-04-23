@@ -318,6 +318,14 @@ async def button_callback(update: Update, context):
     user_id = update.effective_user.id
     premium_active = user_premium.get(user_id, False)
 
+async def support(update: Update, context):
+    await update.message.reply_text(
+        "📞 *Связь с администратором*\n\n"
+        "Если у вас возникли проблемы с оплатой или есть вопросы, напишите мне лично: @teengranny\n\n"
+        "Отвечаю обычно в течение нескольких часов.",
+        parse_mode="Markdown"
+    )    
+
     if data == "menu":
         await query.edit_message_text(
             "🎁 *Подарочный гуру*\n\nВыбери категорию:",
@@ -449,3 +457,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+   application.add_handler(CommandHandler("support", support))
