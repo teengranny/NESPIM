@@ -326,9 +326,9 @@ async def activate_premium(update: Update, context):
 
 async def support(update: Update, context):
     await update.message.reply_text(
-        "📞 *Связь с администратором*\n\n"
-        "Если у вас возникли проблемы с оплатой или есть вопросы, напишите мне лично: @teengranny\n\n"
-        "Отвечаю обычно в течение нескольких часов.",
+        "📧 *Поддержка*\n\n"
+        "Если возникли вопросы или проблемы с оплатой – пишите на почту:\n\n"
+        "maryaninovan@mail.ru",
         parse_mode="Markdown"
     )
 
